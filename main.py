@@ -29,18 +29,18 @@ if __name__ == '__main__':
         }
 
         if request.method == 'GET':
-            user_id = request.args['userID']
-            if not isinstance(user_id, int):
-                result['message'] = 'Error: user_id must be of type integer'
+            user_email = request.args['user_email']
+            if not isinstance(user_email, int):
+                result['message'] = 'Error: user_email must be of type integer'
             else:
                 result['message'] = 'User exists'
-                result['data'] = User.query.filter_by(user_id = user_id).first().toString()
+                result['data'] = User.query.filter_by(user_email = user_email).first().to_json()
 
         elif request.method == 'POST':
             data = json.loads(request.data)
 
             try:
-                user = User(name = data['name'], deleted = False)
+                user = User(name = data['name'], user_email = data['email'], deleted = False)
                 user.set_password(data['password'])
 
                 if len(User.query.filter_by(name = user.name).all()) > 0:
@@ -57,7 +57,7 @@ if __name__ == '__main__':
         elif request.method == 'PUT':
             try:
                 data = json.loads(request.data)
-                user = User.query.filter_by(user_id = data['user_id']).first()
+                user = User.query.filter_by(user_email = data['user_email']).first()
                 if 'name' in data.keys(): user.name = data['name']
                 if 'deleted' in data.keys(): user.name = data['deleted']
                 db.session.commit()
@@ -103,7 +103,7 @@ if __name__ == '__main__':
         elif request.method == 'POST':
             data = json.loads(request.data)
 
-            post = Post(name = data['name'], content = data['content'], user_id = data['user_id'], board_name = data['board_name'])
+            post = Post(name = data['name'], content = data['content'], user_email = data['user_email'], board_name = data['board_name'])
 
             if len(Post.query.filter_by(name = post.name, board_name = data['board_name']).all()) > 0:
                 result['message'] = 'Post already exists'

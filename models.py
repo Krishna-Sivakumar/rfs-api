@@ -23,7 +23,7 @@ class Board(db.Model):
 
 class User(db.Model):
     # Relations
-    user_id = db.Column(db.Integer, primary_key=True)
+    user_email = db.Column(db.String(60), primary_key = True)
     posts = db.relationship('Post', backref='user')
     comments = db.relationship('Comment', backref='user')
 
@@ -37,7 +37,7 @@ class User(db.Model):
 
     def to_json(self):
         # Returns a json string representing an User object
-        return json.dumps({'name': self.name, 'user_id': self.user_id, 'deleted': self.deleted, 'description': self.description})
+        return json.dumps({'name': self.name, 'user_email': self.user_email, 'deleted': self.deleted, 'description': self.description})
 
     def set_password(self, password):
         self.password_hash = sha256(password.encode('utf-8')).digest()
@@ -52,7 +52,7 @@ class User(db.Model):
 class Post(db.Model):
     # Relations
     post_id = db.Column(db.Integer, primary_key = True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable = False)
+    user_email = db.Column(db.Integer, db.ForeignKey('user.user_email'), nullable = False)
     board_name = db.Column(db.Integer, db.ForeignKey('board.board_name'), nullable = False)
     comments = db.relationship('Comment', backref = 'post')
     
@@ -74,7 +74,7 @@ class Post(db.Model):
 class Comment(db.Model):
     # Relations
     comment_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    user_email = db.Column(db.Integer, db.ForeignKey('user.user_email'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.post_id'), nullable=False)
     parent_id = db.Column(db.Integer, db.ForeignKey('comment.comment_id'))
 

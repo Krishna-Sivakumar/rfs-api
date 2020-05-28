@@ -7,6 +7,7 @@ board = {
 
 user = {
     'name': 'John Doe',
+    'email': 'johndoe@example.com',
     'password': 'password1'
 }
 
@@ -16,15 +17,6 @@ post = {
     'user_id': 1,
     'board_name': 'Science Board',
 }
-'''
-x = requests.post('http://127.0.0.1:5000/boards', json.dumps(board))
-print(x.json())
 
-y = requests.post('http://127.0.0.1:5000/users', json.dumps(user))
-print(y.json())
-post['userID'] = x.json()['data']['user_id']
-'''
-z = requests.post('http://127.0.0.1:5000/posts', json.dumps(post))
-print(z)
-print(z.json())
-print(z.raw)
+response = requests.post('http://127.0.0.1:5000/users', json.dumps(user))
+print(response.json())
