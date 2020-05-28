@@ -17,6 +17,7 @@ def init_database(app):
 
 
 if __name__ == '__main__':
+
     app = create_app()
     if not os.path.isfile('sqlite:///test.db'):
         init_database(app)
@@ -40,10 +41,10 @@ if __name__ == '__main__':
             data = json.loads(request.data)
 
             try:
-                user = User(name = data['name'], user_email = data['email'], deleted = False)
+                user = User(username = data['username'], user_email = data['user_email'], deleted = False)
                 user.set_password(data['password'])
 
-                if len(User.query.filter_by(name = user.name).all()) > 0:
+                if len(User.query.filter_by(user_email = user.user_email).all()) > 0:
                     result['message'] = 'User already exists'
                 else:
                     db.session.add(user)
@@ -51,18 +52,6 @@ if __name__ == '__main__':
                     result['message'] = 'User created'
                     result['data'] = user.to_json()
 
-            except KeyError:
-                result['message'] = 'Error: request does not match format'
-
-        elif request.method == 'PUT':
-            try:
-                data = json.loads(request.data)
-                user = User.query.filter_by(user_email = data['user_email']).first()
-                if 'name' in data.keys(): user.name = data['name']
-                if 'deleted' in data.keys(): user.name = data['deleted']
-                db.session.commit()
-                result['message'] = 'User was modified'
-                result['data'] = user.to_json()
             except KeyError:
                 result['message'] = 'Error: request does not match format'
 
@@ -74,11 +63,9 @@ if __name__ == '__main__':
         result = {}
         if request.method == 'GET':
             pass
-        elif request.method == 'PUT':
-            pass
         elif request.method == 'POST':
             data = json.loads(request.data)
-            board = Board(board_name = data['name'], description = data['description'])
+            board = Board(board_name = data['board_name'], description = data['description'])
             if len(Board.query.filter_by(board_name = board.board_name).all()) > 0:
                 result['message'] = 'Board already exists'
             else:
@@ -97,9 +84,6 @@ if __name__ == '__main__':
             post = Post.query.filter_by(post_id = post_id).first()
             result['data'] = post.to_json()
 
-        elif request.method == 'PUT':
-            pass
-
         elif request.method == 'POST':
             data = json.loads(request.data)
 
@@ -116,6 +100,26 @@ if __name__ == '__main__':
 
     @app.route('/comments', methods=['GET', 'PUT', 'POST'])
     def comments():
-        pass
+
+        result = {
+            'message': '',
+            'data': ''
+        }
+
+        if request.method == 'GET':
+            comment_id = request.args['comment_id']
+            query = Comment.query.get(comment_id)
+            if not query == None:
+                result['data'] = query.to_json()
+
+        elif request.method == 'POST':
+            data = json.loads(request.data)
+            comment = Comment(user_email = data['user_email'], post_id = data['post_id'], content = data['content'])
+            db.session.add(comment)
+            db.session.commit()
+            result['message'] = 'Comment was created'
+            result['data'] = comment.to_json()
+
+        return result
 
     app.run()

@@ -16,7 +16,7 @@ class Board(db.Model):
 
     def to_json(self):
         return json.dumps({
-            'name': self.name,
+            'name': self.board_name,
             'description': self.description,
         })
 
@@ -29,7 +29,7 @@ class User(db.Model):
 
     # Data
 
-    name = db.Column(db.Text, nullable = False)
+    username = db.Column(db.Text, nullable = False)
     password_hash = db.Column(db.String(256), nullable = False)
     description = db.Column(db.Text)
     deleted = db.Column(db.Boolean, default = False)
@@ -37,7 +37,12 @@ class User(db.Model):
 
     def to_json(self):
         # Returns a json string representing an User object
-        return json.dumps({'name': self.name, 'user_email': self.user_email, 'deleted': self.deleted, 'description': self.description})
+        return json.dumps({
+            'username': self.username,
+            'user_email': self.user_email,
+            'description': self.description,
+            'deleted': self.deleted
+        })
 
     def set_password(self, password):
         self.password_hash = sha256(password.encode('utf-8')).digest()
@@ -64,10 +69,13 @@ class Post(db.Model):
 
     def to_json(self):
         return json.dumps({
+            'post_id': self.post_id,
+            'user_email': self.user_email,
+            'board_name': self.board_name,
+            'comments': [comment.to_json() for comment in self.comments],
             'name': self.name,
             'content': self.content,
-            'deleted': self.deleted,
-            'comments': [comment.toJSON for comment in self.comments]
+            'deleted': self.deleted
         })
 
 
@@ -87,7 +95,10 @@ class Comment(db.Model):
 
     def to_json(self):
         return json.dumps({
-            'parentID': self.parent_id,
+            'comment_id': self.comment_id,
+            'user_email': self.user_email,
+            'post_id': self.post_id,
+            'parent_id': self.parent_id,
+            'deleted': self.deleted,
             'content': self.content,
-            'deleted': self.deleted
         })
