@@ -1,5 +1,6 @@
 from flask import Flask, request
 from models import *
+from flask_login import current_user, login_user, login_required
 import os.path, json
 
 
@@ -8,6 +9,7 @@ def create_app():
     app.config['DEBUG'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///test.db"
     db.init_app(app)
+    login.init_app(app)
     return app
 
 
@@ -21,8 +23,9 @@ if __name__ == '__main__':
     app = create_app()
     if not os.path.isfile('sqlite:///test.db'):
         init_database(app)
+    login = LoginManager()
 
-    @app.route('/users', methods = ['GET','PUT','POST'])
+    @app.route('/users', methods = ['GET', 'POST'])
     def users():
         result = {
             'message': None,
@@ -58,7 +61,7 @@ if __name__ == '__main__':
         return json.dumps(result)
 
 
-    @app.route('/boards', methods=['GET', 'PUT', 'POST'])
+    @app.route('/boards', methods=['GET', 'POST'])
     def boards():
         result = {}
         if request.method == 'GET':
@@ -76,17 +79,27 @@ if __name__ == '__main__':
         return result
 
 
-    @app.route('/posts', methods=['GET', 'PUT', 'POST'])
+    @app.route('/posts/get', methods=['GET', 'POST'])
     def posts():
         result = {}
         if request.method == 'GET':
             post_id = request.args['post_id']
             post = Post.query.filter_by(post_id = post_id).first()
             result['data'] = post.to_json()
+        return result
 
-        elif request.method == 'POST':
+
+    @app.route('/posts/post', methods = ['POST'])
+    @login_required
+    def postThread():
+
+        result = {
+            'message': '',
+            'data': ''
+        }
+
+        if request.method == 'POST':
             data = json.loads(request.data)
-
             post = Post(name = data['name'], content = data['content'], user_email = data['user_email'], board_name = data['board_name'])
 
             if len(Post.query.filter_by(name = post.name, board_name = data['board_name']).all()) > 0:
@@ -96,9 +109,11 @@ if __name__ == '__main__':
                 db.session.commit()
                 result['message'] = 'Post created'
                 result['data'] = post.to_json()
+
         return result
 
-    @app.route('/comments', methods=['GET', 'PUT', 'POST'])
+
+    @app.route('/comments', methods=['GET', 'POST'])
     def comments():
 
         result = {
@@ -121,5 +136,6 @@ if __name__ == '__main__':
             result['data'] = comment.to_json()
 
         return result
+
 
     app.run()
