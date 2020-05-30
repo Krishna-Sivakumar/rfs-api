@@ -79,19 +79,23 @@ if __name__ == '__main__':
         return result
 
 
-    @app.route('/posts/get', methods=['GET', 'POST'])
-    def posts():
+    @app.route('/threads/get', methods=['GET', 'POST'])
+    def get_thread():
         result = {}
         if request.method == 'GET':
-            post_id = request.args['post_id']
-            post = Post.query.filter_by(post_id = post_id).first()
-            result['data'] = post.to_json()
+            param = request.args['filter']
+            if not param == 'all':
+                thread_id = request.args['thread_id']
+                thread = Thread.query.filter_by(thread_id = thread_id).first()
+                result['data'] = thread.to_json()
+            else:
+                print([threaD.to_json() for threaD in Thread.query.all()])
+                result['data'] = [threaD.to_json() for threaD in Thread.query.all()]
         return result
 
 
-    @app.route('/posts/post', methods = ['POST'])
-    @login_required
-    def postThread():
+    @app.route('/threads/post', methods = ['POST'])
+    def post_thread():
 
         result = {
             'message': '',
@@ -100,15 +104,15 @@ if __name__ == '__main__':
 
         if request.method == 'POST':
             data = json.loads(request.data)
-            post = Post(name = data['name'], content = data['content'], user_email = data['user_email'], board_name = data['board_name'])
+            thread = Thread(name = data['name'], content = data['content'], user_email = data['user_email'], board_name = data['board_name'])
 
-            if len(Post.query.filter_by(name = post.name, board_name = data['board_name']).all()) > 0:
-                result['message'] = 'Post already exists'
+            if len(Thread.query.filter_by(name = thread.name, board_name = data['board_name']).all()) > 0:
+                result['message'] = 'Thread already exists'
             else:
-                db.session.add(post)
+                db.session.add(thread)
                 db.session.commit()
-                result['message'] = 'Post created'
-                result['data'] = post.to_json()
+                result['message'] = 'Thread created'
+                result['data'] = thread.to_json()
 
         return result
 
@@ -129,13 +133,12 @@ if __name__ == '__main__':
 
         elif request.method == 'POST':
             data = json.loads(request.data)
-            comment = Comment(user_email = data['user_email'], post_id = data['post_id'], content = data['content'])
+            comment = Comment(user_email = data['user_email'], thread_id = data['thread_id'], content = data['content'])
             db.session.add(comment)
             db.session.commit()
             result['message'] = 'Comment was created'
             result['data'] = comment.to_json()
 
         return result
-
 
     app.run()
