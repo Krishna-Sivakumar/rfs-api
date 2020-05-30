@@ -1,15 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin, LoginManager
 import json
 import datetime
 from hashlib import sha256
 
 db = SQLAlchemy()
-login = LoginManager()
-
-@login.user_loader
-def load_user(id):
-    return User.query.get(id)
 
 class Board(db.Model):
     # Relations
@@ -26,7 +20,7 @@ class Board(db.Model):
         })
 
 
-class User(db.Model, UserMixin):
+class User(db.Model):
     # Relations
     user_email = db.Column(db.String(60), primary_key = True)
     threads = db.relationship('Thread', backref='user')
@@ -57,7 +51,6 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return self.toJSON()
-
 
 class Thread(db.Model):
     # Relations

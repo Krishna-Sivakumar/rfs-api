@@ -1,7 +1,6 @@
 from flask import Flask, request
 from models import *
-from flask_login import current_user, login_user, login_required
-import os.path, json
+import os, os.path, json
 
 
 def create_app():
@@ -9,7 +8,6 @@ def create_app():
     app.config['DEBUG'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///test.db"
     db.init_app(app)
-    login.init_app(app)
     return app
 
 
@@ -23,7 +21,6 @@ if __name__ == '__main__':
     app = create_app()
     if not os.path.isfile('sqlite:///test.db'):
         init_database(app)
-    login = LoginManager()
 
     @app.route('/users', methods = ['GET', 'POST'])
     def users():
@@ -104,15 +101,19 @@ if __name__ == '__main__':
 
         if request.method == 'POST':
             data = json.loads(request.data)
-            thread = Thread(name = data['name'], content = data['content'], user_email = data['user_email'], board_name = data['board_name'])
+            user = User.query.get(data['user_email'])
+            if not user == None and user.check_password(data['password']):
+                thread = Thread(name = data['name'], content = data['content'], user_email = data['user_email'], board_name = data['board_name'])
 
-            if len(Thread.query.filter_by(name = thread.name, board_name = data['board_name']).all()) > 0:
-                result['message'] = 'Thread already exists'
+                if len(Thread.query.filter_by(name = thread.name, board_name = data['board_name']).all()) > 0:
+                    result['message'] = 'Thread already exists'
+                else:
+                    db.session.add(thread)
+                    db.session.commit()
+                    result['message'] = 'Thread created'
+                    result['data'] = thread.to_json()
             else:
-                db.session.add(thread)
-                db.session.commit()
-                result['message'] = 'Thread created'
-                result['data'] = thread.to_json()
+                result['message'] = 'User/Password combination is not valid'
 
         return result
 
