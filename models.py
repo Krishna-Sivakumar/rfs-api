@@ -14,10 +14,10 @@ class Board(db.Model):
     description = db.Column(db.Text)
 
     def to_json(self):
-        return json.dumps({
+        return {
             'name': self.board_name,
             'description': self.description,
-        })
+        }
 
 
 class User(db.Model):
@@ -36,12 +36,12 @@ class User(db.Model):
 
     def to_json(self):
         # Returns a json string representing an User object
-        return json.dumps({
+        return {
             'username': self.username,
             'user_email': self.user_email,
             'description': self.description,
             'deleted': self.deleted
-        })
+        }
 
     def set_password(self, password):
         self.password_hash = sha256(password.encode('utf-8')).digest()
@@ -50,7 +50,7 @@ class User(db.Model):
         return self.password_hash == sha256(password.encode('utf-8')).digest()
 
     def __repr__(self):
-        return self.toJSON()
+        return self.to_json()
 
 class Thread(db.Model):
     # Relations
@@ -66,7 +66,7 @@ class Thread(db.Model):
     timeCreated = db.Column(db.Date, nullable = False, default = datetime.datetime.now().date())
 
     def to_json(self):
-        return json.dumps({
+        return {
             'thread_id': self.thread_id,
             'user_email': self.user_email,
             'board_name': self.board_name,
@@ -74,7 +74,7 @@ class Thread(db.Model):
             'name': self.name,
             'content': self.content,
             'deleted': self.deleted
-        })
+        }
 
 
 class Comment(db.Model):
@@ -92,11 +92,11 @@ class Comment(db.Model):
     timeCreated = db.Column(db.Date, nullable=False, default = datetime.datetime.now().date())
 
     def to_json(self):
-        return json.dumps({
+        return {
             'comment_id': self.comment_id,
             'user_email': self.user_email,
             'thread_id': self.thread_id,
             'parent_id': self.parent_id,
             'deleted': self.deleted,
             'content': self.content,
-        })
+        }

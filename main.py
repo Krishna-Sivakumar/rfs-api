@@ -22,72 +22,121 @@ if __name__ == '__main__':
     if not os.path.isfile('sqlite:///test.db'):
         init_database(app)
 
-    @app.route('/users', methods = ['GET', 'POST'])
-    def users():
+    @app.route('/users/get', methods = ['GET', 'POST'])
+    def get_user():
+
         result = {
             'message': None,
             'data': None,
         }
 
+        data = request.args
+
         if request.method == 'GET':
-            user_email = request.args['user_email']
-            if not isinstance(user_email, int):
-                result['message'] = 'Error: user_email must be of type integer'
-            else:
-                result['message'] = 'User exists'
-                result['data'] = User.query.filter_by(user_email = user_email).first().to_json()
 
-        elif request.method == 'POST':
-            data = json.loads(request.data)
+            result['data'] = User.query.get(data['user_email']).to_json()
 
-            try:
-                user = User(username = data['username'], user_email = data['user_email'], deleted = False)
-                user.set_password(data['password'])
-
-                if len(User.query.filter_by(user_email = user.user_email).all()) > 0:
-                    result['message'] = 'User already exists'
-                else:
-                    db.session.add(user)
-                    db.session.commit()
-                    result['message'] = 'User created'
-                    result['data'] = user.to_json()
-
-            except KeyError:
-                result['message'] = 'Error: request does not match format'
-
-        return json.dumps(result)
-
-
-    @app.route('/boards', methods=['GET', 'POST'])
-    def boards():
-        result = {}
-        if request.method == 'GET':
-            pass
-        elif request.method == 'POST':
-            data = json.loads(request.data)
-            board = Board(board_name = data['board_name'], description = data['description'])
-            if len(Board.query.filter_by(board_name = board.board_name).all()) > 0:
-                result['message'] = 'Board already exists'
-            else:
-                db.session.add(board)
-                db.session.commit()
-                result['message'] = 'Board was created'
-                result['data'] =  board.to_json()
         return result
 
 
-    @app.route('/threads/get', methods=['GET', 'POST'])
-    def get_thread():
-        result = {}
+    @app.route('/users/post', methods = ['POST'])
+    def post_user():
+
+        result = {
+            'message': None,
+            'data': None,
+        }
+
+        if request.method == 'POST':
+            data = json.loads(request.data)
+
+            user = User(username = data['username'], user_email = data['user_email'], deleted = False)
+            user.set_password(data['password'])
+
+            if User.query.get(data['user_email']):
+
+                result['message'] = 'User already exists'
+
+            else:
+
+                db.session.add(user)
+                db.session.commit()
+                result['message'] = 'User created'
+
+        return result
+
+
+    @app.route('/boards/get', methods=['GET', 'POST'])
+    def get_board():
+
+        result = {
+            'message': '',
+            'data': '',
+        }
+
         if request.method == 'GET':
-            param = request.args['filter']
-            if not param == 'all':
-                thread_id = request.args['thread_id']
+
+            data = request.args
+
+            if data['filter'] == 'all':
+
+                request['data'] = [board.to_json() for board in Board.query.all()]
+
+            else:
+
+                request['data'] = Board.query.get(data['board_name'])
+
+
+    @app.route('/boards/post', methods = ['POST'])
+    def post_board():
+
+        result = {
+            'message': '',
+            'data': '',
+        }
+
+        if request.method == 'POST':
+
+            data = json.loads(request.data)
+            user = User.query.get(data['user']['user_email'])
+
+            if (not user == None) and (user.check_password(data['user']['password'])):
+
+                if Board.query.get(data['board_name']) == None:
+                    board = Board(board_name = data['board_name'], description = data['description'])
+                    db.session.add(board)
+                    db.session.commit()
+                    result['message'] = 'Board was created'
+
+                else:
+                    result['message'] = 'Board already exists'
+            else:
+
+                result['message'] = 'User-email/Password combination is invalid'
+
+        return result
+
+
+    @app.route('/threads/get', methods=['GET'])
+    def get_thread():
+
+        result = {}
+
+        if request.method == 'GET':
+
+            data = request.args
+
+            if not data['filter'] == 'all':
+
+                thread_id = data['thread_id']
                 thread = Thread.query.filter_by(thread_id = thread_id).first()
                 result['data'] = thread.to_json()
+
+
             else:
-                print([threaD.to_json() for threaD in Thread.query.all()])
-                result['data'] = [threaD.to_json() for threaD in Thread.query.all()]
+
+                result['data'] = [thread.to_json() for thread in Thread.query.all()]
+
         return result
 
 
@@ -100,46 +149,80 @@ if __name__ == '__main__':
         }
 
         if request.method == 'POST':
-            data = json.loads(request.data)
-            user = User.query.get(data['user_email'])
-            if not user == None and user.check_password(data['password']):
-                thread = Thread(name = data['name'], content = data['content'], user_email = data['user_email'], board_name = data['board_name'])
 
-                if len(Thread.query.filter_by(name = thread.name, board_name = data['board_name']).all()) > 0:
-                    result['message'] = 'Thread already exists'
-                else:
+            data = json.loads(request.data)
+
+            if (not User.query.get(data['user']['email']) == None) and (not Board.query.get(data['board_name']) == None):
+
+                thread = Thread(name = data['name'], content = data['content'], user_email = data['user']['user_email'])
+                user = User.query.get(data['user']['user_email'])
+
+                if user.check_password(data['user']['password']):
                     db.session.add(thread)
                     db.session.commit()
                     result['message'] = 'Thread created'
-                    result['data'] = thread.to_json()
+                else:
+                    result['message'] = 'User-email/Password combination is invalid'
             else:
-                result['message'] = 'User/Password combination is not valid'
+                result['message'] = 'User/Board does not exist'
 
         return result
 
 
-    @app.route('/comments', methods=['GET', 'POST'])
-    def comments():
+    @app.route('/comments/get', methods = ['GET'])
+    def get_comment():
+
+        result = {
+            'message': '',
+            'data': '',
+        }
+
+        data = request.args
+
+        if data['filter'] == 'all':
+
+            result['message'] = 'Cannot return all comments'
+
+        else:
+
+            result['data'] = Comment.query.get(data['comment_id'])
+
+
+    @app.route('/comments/post', methods=['POST'])
+    def post_comment():
 
         result = {
             'message': '',
             'data': ''
         }
 
-        if request.method == 'GET':
-            comment_id = request.args['comment_id']
-            query = Comment.query.get(comment_id)
-            if not query == None:
-                result['data'] = query.to_json()
+        data = json.loads(request.data)
+        user = User.query.get(data['user']['user_email'])
 
-        elif request.method == 'POST':
-            data = json.loads(request.data)
-            comment = Comment(user_email = data['user_email'], thread_id = data['thread_id'], content = data['content'])
-            db.session.add(comment)
-            db.session.commit()
-            result['message'] = 'Comment was created'
-            result['data'] = comment.to_json()
+        if (not user == None) and (user.check_password(data['user']['password'])):
 
-        return result
+            if not Thread.query.get(data['thread_id']) == None:
+
+                if data['parent_id'] == None:
+
+                    comment = Comment(user_email = user.user_email, thread_id = data['thread_id'], content = data['content'])
+
+                else:
+
+                    if not Comment.query.get(data['parent_id']) == None:
+
+                        comment = Comment(user_email=user.user_email, thread_id=data['thread_id'], parent_id = data['parent_id'], content=data['content'])
+
+                    else:
+
+                        result['message'] = 'Parent comment does not exist'
+
+            else:
+
+                result['message'] = 'Thread does not exist'
+
+        else:
+            result['message'] = 'User-email/Password combination is invalid'
+
 
     app.run()
