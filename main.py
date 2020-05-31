@@ -5,7 +5,6 @@ import os, os.path, json
 
 def create_app():
     app = Flask(__name__)
-    app.config['DEBUG'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///test.db"
     db.init_app(app)
     return app
@@ -220,3 +219,6 @@ def post_comment():
 
     else:
         result['message'] = 'User-email/Password combination is invalid'
+
+if __name__ == '__main__':
+    app.run(debug = True)
