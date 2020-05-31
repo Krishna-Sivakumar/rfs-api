@@ -30,7 +30,8 @@ def get_user():
 
     if request.method == 'GET':
 
-        result['data'] = User.query.get(data['user_email']).to_json()
+        if User.query.get(data['user_email']):
+            result['data'] = User.query.get(data['user_email'])
 
     return result
 
@@ -126,7 +127,8 @@ def get_thread():
 
             thread_id = data['thread_id']
             thread = Thread.query.filter_by(thread_id = thread_id).first()
-            result['data'] = thread.to_json()
+            if thread:
+                result['data'] = thread.to_json()
 
 
         else:
@@ -180,8 +182,8 @@ def get_comment():
         result['message'] = 'Cannot return all comments'
 
     else:
-
-        result['data'] = Comment.query.get(data['comment_id'])
+        if Comment.query.get(data['comment_id']):
+            result['data'] = Comment.query.get(data['comment_id'])
 
 
 @app.route('/comments/post', methods=['POST'])
