@@ -4,6 +4,17 @@ from models import *
 import json
 
 
+def process_request_data():
+
+    result = dict(request.form)
+
+    if request.authorization:
+        result['user'] = dict(request.authorization)
+        result['user']['user_email'] = result['user']['username']
+
+    return result
+
+
 @app.route('/users/get', methods = ['GET', 'POST'])
 def get_user():
 
@@ -31,7 +42,8 @@ def post_user():
     }
 
     if request.method == 'POST':
-        data = request.form()
+
+        data = process_request_data()
 
         user = User(username = data['username'], user_email = data['user_email'], deleted = False)
         user.set_password(data['password'])
@@ -79,7 +91,8 @@ def post_board():
 
     if request.method == 'POST':
 
-        data = json.loads(request.data)
+        data = process_request_data()
+
         user = User.query.get(data['user']['user_email'])
 
         if (not user == None) and (user.check_password(data['user']['password'])):
@@ -133,7 +146,7 @@ def post_thread():
 
     if request.method == 'POST':
 
-        data = json.loads(request.data)
+        data = process_request_data()
 
         if (not User.query.get(data['user']['email']) == None) and (not Board.query.get(data['board_name']) == None):
 
@@ -179,7 +192,7 @@ def post_comment():
         'data': ''
     }
 
-    data = json.loads(request.data)
+    data = process_request_data()
     user = User.query.get(data['user']['user_email'])
 
     if (not user == None) and (user.check_password(data['user']['password'])):
