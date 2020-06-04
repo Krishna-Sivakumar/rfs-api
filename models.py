@@ -55,8 +55,8 @@ class User(db.Model):
 class Thread(db.Model):
     # Relations
     thread_id = db.Column(db.Integer, primary_key = True)
-    user_email = db.Column(db.Integer, db.ForeignKey('user.user_email'), nullable = False)
-    board_name = db.Column(db.Integer, db.ForeignKey('board.board_name'), nullable = False)
+    user_email = db.Column(db.String(60), db.ForeignKey('user.user_email'), nullable = False)
+    board_name = db.Column(db.Text, db.ForeignKey('board.board_name'), nullable = False)
     comments = db.relationship('Comment', backref = 'Thread')
     
     # Data
@@ -80,7 +80,7 @@ class Thread(db.Model):
 class Comment(db.Model):
     # Relations
     comment_id = db.Column(db.Integer, primary_key=True)
-    user_email = db.Column(db.Integer, db.ForeignKey('user.user_email'), nullable=False)
+    user_email = db.Column(db.String(60), db.ForeignKey('user.user_email'), nullable=False)
     thread_id = db.Column(db.Integer, db.ForeignKey('thread.thread_id'), nullable=False)
     parent_id = db.Column(db.Integer, db.ForeignKey('comment.comment_id'))
 
