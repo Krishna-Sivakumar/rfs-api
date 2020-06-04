@@ -60,6 +60,26 @@ def post_user():
     return result
 
 
+@app.route('/users/put', methods = ['GET', 'POST'])
+def update_user():
+
+    result = {
+        'message': None,
+        'data': None,
+    }
+
+    data = process_request_data()
+    user = User.query.get(data['user']['user_email'])
+
+    if user and user.check_password(data['user']['password']) and data['target_user_email'] == user.user_email:
+        user.deleted = data['deleted']
+        user.description = data['description']
+        user.username = data['username']
+        result['message'] = 'User modified'
+    else:
+        result['message'] = 'Invalid User-email/Password combination'
+
+
 @app.route('/boards/get', methods=['GET', 'POST'])
 def get_board():
 
@@ -182,6 +202,8 @@ def get_comment():
     else:
         if Comment.query.get(data['comment_id']):
             result['data'] = Comment.query.get(data['comment_id'])
+
+    return result
 
 
 @app.route('/comments/post', methods=['POST'])
